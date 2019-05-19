@@ -57,10 +57,71 @@ class WechatLoginView(APIView):
         token = jwt_encode_handler(payload)
 
         resp_data = {
-            "user_id": user.id
+            "user_id": user.id,
             "username": user.username,
             "avatar": user.avatar,
             "token": token,
         }
 
         return Response(resp_data)
+
+class YijuEveryday(APIView):
+    #处理每日一句的请求
+    def get(self, request):
+        #收到/yiju/userID=xxx&date=xxxx-xx-xx$num=x
+        user_id=request.GET('userID')
+        date=request.GET('date')
+        num=request.GET('num')
+        
+        #获取用户信息
+        try:
+            userinfo=Users.objects.get(id=user_id)
+        except:
+            resp_data = {
+                "message": "user_id error"
+            }
+            return Response(resp_data)
+        
+        #获取收藏——字符串形式
+        collect=userinfo.yiju_collected
+        #获取收藏——列表形式
+        collect=list(map(int,collect.split(',')))
+
+        #获取每日一句信息
+        try:
+            yijus=Yiju.objects.filter(date__lte=date).order_by('-date')[:num]
+        except:
+            resp_data = {
+                "message": "yiju error"
+            }
+            return Response(resp_data)
+
+        yiju_list=[]
+        for yiju in yijus:
+            data={
+                "push_id":      yiju.id,
+                "date":         yiju.date,
+                "dynasty":      yiju.dynasty,
+                "author":       yiju.author,
+                "title":        yiju.title,
+                "article":      yiju.article,
+                "content":      yiju.content,
+                "like_count":   yiju.like,
+                "like":         yiju.id in collect
+            }
+            yiju_list.append(data)
+        
+        resp_data={
+            "swiper_List":  yiju_list
+        }
+
+        return Response(resp_data)
+
+        
+
+
+
+
+
+
+
