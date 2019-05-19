@@ -1,22 +1,89 @@
-from django.shortcuts import get_object_or_404,render
-from django.http import Http404
-from django.shortcuts import render_to_response
-from django.template import loader
-from django.http import HttpResponse
-from django.contrib.auth import authenticate
-from django.contrib.auth.decorators import login_required,user_passes_test
-from .models import Users,Authors,Books,Publishers,Loan,Comment
-from django.contrib import auth
-from django.contrib.auth.models import User
-from django.http import HttpResponseRedirect
-from django.urls import reverse
-from django.utils import timezone
-from datetime import  datetime,timedelta
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.settings import api_settings
 import json
+from .models import *
+
+class GetWordsView(APIView):
+    '''
+    背单词接口
+    '''
+    def TodayTask(self, request):
+        id = request.data.get('user_id')
+        user = User.objects.get(user_id = id)
+        new_words_num = user.setting_new_word
+        review_words_num = user.setting_review_word
+        JSON = {}
+        JSON['method'] = "words_TodayTask"
+        data = {}
+        history = user.study_history.split(',')
+        already = self.count(history)
+        data['date'] = len(history) + 1
+        word_list = self.getwords(user.bitmap, new_words_num, review_words_num, already)
+        data['word_List'] = word_list
+        JSON['data'] = data
+
+        return Response(JSON)
+
+
+    def count(self, history):
+        count = 0
+        for hi in history:
+            count += int(hi.split(':')[-1])
+        return count
+
+    def getwords(self, bitmap, new, old, already):
+        wordlist = []
+        words = Word.objects.all()
+        if old < already:
+            old = already
+        for i, wd in enumerate(words[0:already]):
+            if int(bitmap[i]) < 3:
+                word = {}
+                pos = wd.pos
+                sentence = wd.sentence[0:pos] + '(' + wd.sentence[pos] + ')' + wd.sentence[pos+1:]
+                word["word_Sentence"] = sentence
+                word["word_PartOfSpeech"] = wd.part_of_speech
+                word["word_Sense"] = wd.meaning
+                word["word_RemberedTimes"] = int(bitmap[i])
+                similar = ""
+                for w in words:
+                    if w.word == wd.word:
+                        po = w.pos
+                        similar = w.sentence[0:po] + '(' + w.sentence[po] + ')' + w.sentence[po+1:]
+                        break
+                word["word_SimilarSentence"] = similar
+                wordlist.append(word)
+                old -= 1
+            if old == 0:
+                break
+        for i, wd in enumerate(words[already:]):
+            word = {}
+            pos = wd.pos
+            sentence = wd.sentence[0:pos] + '(' + wd.sentence[pos] + ')' + wd.sentence[pos+1:]
+            word["word_Sentence"] = sentence
+            word["word_PartOfSpeech"] = wd.part_of_speech
+            word["word_Sense"] = wd.meaning
+            word["word_RemberedTimes"] = int(bitmap[i])
+            similar = ""
+            for w in words:
+                if w.word == wd.word:
+                    po = w.pos
+                    similar = w.sentence[0:po] + '(' + w.sentence[po] + ')' + w.sentence[po+1:]
+                    break
+            word["word_SimilarSentence"] = similar
+            wordlist.append(word)
+            new -= 1
+            if new == 0:
+                break
+        return wordlist
+
+
+
+
+
+
 
 class WechatLoginView(APIView):
     """
@@ -64,3 +131,7 @@ class WechatLoginView(APIView):
         }
 
         return Response(resp_data)
+
+
+
+
