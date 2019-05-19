@@ -14,8 +14,8 @@ from django.utils import timezone
 from datetime import  datetime,timedelta
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.request
-from rest_framework.settings import APISettings
+from rest_framework import status
+from rest_framework.settings import api_settings
 import json
 
 class WechatLoginView(APIView):
@@ -57,7 +57,7 @@ class WechatLoginView(APIView):
         token = jwt_encode_handler(payload)
 
         resp_data = {
-            "user_id": user.id
+            "user_id": user.id,
             "username": user.username,
             "avatar": user.avatar,
             "token": token,
