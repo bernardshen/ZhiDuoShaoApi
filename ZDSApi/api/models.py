@@ -18,6 +18,7 @@ class Users(models.Model):
 
 class Word(models.Model):
     word = models.CharField(max_length=20)
+    pos = models.IntegerField()
     meaning = models.TextField()
     sentence = models.TextField()
     article = models.TextField()
