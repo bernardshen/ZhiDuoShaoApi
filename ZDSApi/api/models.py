@@ -6,12 +6,12 @@ from django.contrib.auth.models import User
 class Users(models.Model):
     user_name = models.CharField(max_length=50)
     bitmap = models.CharField(max_length=1005, default=1000*'0')
-    word_collected = models.TextField()
-    dictionary_collected = models.TextField()
-    yiju_collected = models.TextField()
+    word_collected = models.TextField(default="")
+    dictionary_collected = models.TextField(default="")
+    yiju_collected = models.TextField(default="")
     setting_new_word = models.IntegerField(default=10)
     setting_review_word = models.IntegerField(default=10)
-    study_history = models.TextField()
+    study_history = models.TextField(default="")
     mode = models.IntegerField(default=0) #0表示积累模式
     def __str__(self):
         return self.user_name
