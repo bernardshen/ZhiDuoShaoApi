@@ -5,7 +5,7 @@ from django.template import loader
 from django.http import HttpResponse
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required,user_passes_test
-from .models import Users,Authors,Books,Publishers,Loan,Comment
+from .models import Users
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
@@ -17,8 +17,12 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.settings import api_settings
 import json
+import requests
 
-class WechatLoginView(APIView):
+appid = "wxc1de7ec30d311389"
+appsecret = "03eef9f0991167b49014792091e4f091"
+
+class LoginView(APIView):
     """
     微信登录逻辑
     """
@@ -30,37 +34,40 @@ class WechatLoginView(APIView):
             return Response({'message': '缺少code'}, status=status.HTTP_400_BAD_REQUEST)
 
         url = "https://api.weixin.qq.com/sns/jscode2session?appid={0}&secret={1}&js_code={2}&grant_type=authorization_code" \
-            .format(settings.APP_ID, settings.APP_KEY, code)
-        r = request.get(url)
+            .format(appid, appsecret, code)
+        r = requests.get(url)
         res = json.loads(r.text)
         openid = res['openid'] if 'openid' in res else None
-        # session_key = res['session_key'] if 'session_key' in res else None
+        # session_key = res['session_key'] if 'session_key' in res else HTTP_414_REQUEST_URI_TOO_LONGNone
         if not openid:
             return Response({'message': '微信调用失败'}, status=status.HTTP_503)
 
         # 判断用户是否第一次登录
         try:
-            user = User.objects.get(openid=openid)
+            user = Users.objects.get(user_name=openid)
         except Exception:
             # 微信用户第一次登陆,新建用户
-            username = request.data.get('nickname')
-            sex = request.data.get('sex')
-            avatar = request.data.get('avatar')
-            user = User.objects.create(username=username, sex=sex, avatar=avatar)
-            user.set_password(openid)
+            # username = request.data.get('nickname')
+            # sex = request.data.get('sex')
+            # avatar = request.data.get('avatar')
+            user = Users.objects.create(user_name=openid)
+            # user.set_password(openid)
 
         # 手动签发jwt
-        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+        # jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+        # jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
-        payload = jwt_payload_handler(user)
-        token = jwt_encode_handler(payload)
+        # payload = jwt_payload_handler(user)
+        # token = jwt_encode_handler(payload)
 
         resp_data = {
-            "user_id": user.id,
-            "username": user.username,
-            "avatar": user.avatar,
-            "token": token,
+                "userid":user.id,
         }
 
         return Response(resp_data)
+
+    def get(self, request):
+        respdata={
+                "userid":"hello",
+                }
+        return Response(respdata)
