@@ -11,12 +11,12 @@ from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
-from datetime import  datetime,timedelta
+from datetime import  datetime,timedelta,date
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.settings import api_settings
-import JSON
+import json
 import requests
 from .models import *
 
@@ -156,9 +156,14 @@ class YijuEveryday(APIView):
     #处理每日一句的请求
     def get(self, request):
         #收到/yiju/userID=xxx&date=xxxx-xx-xx$num=x
-        user_id=request.GET('userID')
-        date=request.GET('date')
-        num=request.GET('num')
+        try:
+            user_id=int(request.GET['userID'])
+            date_get=request.GET['date']
+            date_Y,date_M,date_D=map(int,date_get.split('-'))
+            date_request=date(date_Y,date_M,date_D)
+            num=int(request.GET['num'])
+        except:
+            return HttpResponse('error')
         
         #获取用户信息
         try:
@@ -173,13 +178,13 @@ class YijuEveryday(APIView):
         collect=userinfo.yiju_collected
         #获取收藏——列表形式
         collect=list(map(int,collect.split(',')))
-
         #获取每日一句信息
         try:
-            yijus=Yiju.objects.filter(date__lte=date).order_by('-date')[:num]
+            yijus=Yiju.objects.filter(date__lte=date_request).order_by('-date')[:num]
         except:
             resp_data = {
-                "message": "yiju error"
+                "message": "yiju error",
+                "date":date_request,
             }
             return Response(resp_data)
 
@@ -204,6 +209,67 @@ class YijuEveryday(APIView):
 
         return Response(resp_data)
 
+class Pushlike(APIView):
+    def get(self, request):
+        try:
+            user_id=int(request.GET['userID'])
+            push_id=int(request.GET['pushID'])
+            like=int(request.GET['like'])
+        except:
+            return Response('error')
+
+        #获取用户及推送信息
+        try:
+            user=Users.objects.get(id=user_id)
+            push=Yiju.objects.get(id=push_id)
+        except:
+            return Response('error')
+
+        collect=user.yiju_collected
+        collect=list(map(int,collect.split(',')))
+        #return Response(collect)
+
+        if like==1:
+            if push_id not in collect:
+                collect.append(push_id)
+                collect=list(map(str,collect))
+                collect=','.join(collect)
+                user.yiju_collected=collect
+                user.save()
+                push.like=push.like+1
+                push.save()
+        else:
+            if push_id in collect:
+                collect.remove(push_id)
+                collect=list(map(str,collect))
+                collect=','.join(collect)
+                user.yiju_collected=collect
+                user.save()
+                push.like=push.like-1
+                push.save()
+
+        return Response(push.like)
+
+class Findword(APIView):
+    def get(self, request):
         
-
-
+        try:
+            word_request=request.GET['word']
+        except:
+            return Response('error')
+        
+        word_list=Dictionary.objects.filter(word=word_request)
+        if word_list is None:
+            return Response('None')
+        
+        data=[]
+        for w in word_list:
+            word_dict={
+                "id":w.id,  #该词的一种意义的id，用于收藏
+                "sense":w.meaning, #该词的这种意义是什么
+                "sentence":w.sentence.split(','),   #例句，是个list
+                "tag":w.part_of_speech, #该词这种意义的词性
+            }
+            data.append(word_dict)
+        
+        return Response(data)

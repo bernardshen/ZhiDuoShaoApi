@@ -42,7 +42,7 @@ class Book(models.Model):
         return self.name
 
 class Yiju(models.Model):
-    date = models.DateTimeField()
+    date = models.DateField()
     title = models.TextField()
     dynasty = models.TextField()
     author = models.TextField()
