@@ -267,8 +267,9 @@ class Findword(APIView):
             word_dict={
                 "id":w.id,  #该词的一种意义的id，用于收藏
                 "sense":w.meaning, #该词的这种意义是什么
-                "sentence":w.sentence.split(','),   #例句，是个list
-                "tag":w.part_of_speech, #该词这种意义的词性
+                "sentence":w.sentence.split('#'),   #例句，是个list
+                "pronunciation":w.pronunciation, #该词这种意义的词性
+                "source":w.source.split('#'),
             }
             data.append(word_dict)
         
@@ -284,9 +285,9 @@ class InitDict(APIView):
         if password!='Ruanjian2019':
             return Response('error')
         
-        file=open('api\dictionary.txt',encoding="utf-8")
+        file=open(r'api\dictionary.txt',encoding="utf-8")
         lines=file.readlines()
-        
+        return Response(1)
         for line in lines:
             line=line.split(' ')
             add=Dictionary(word=line[0],pronunciation=line[1],meaning=line[2],sentence=line[3],source=line[4])
