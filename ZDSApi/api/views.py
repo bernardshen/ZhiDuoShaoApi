@@ -284,7 +284,7 @@ class InitDict(APIView):
         if password!='Ruanjian2019':
             return Response('error')
         
-        file=open('api\dictionary.txt',encoding="utf-8")
+        file=open(r'/home/ubuntu/zdsapi/ZDSApi/api/static/api/dictionary.txt',encoding="utf-8")
         lines=file.readlines()
         
         for line in lines:
