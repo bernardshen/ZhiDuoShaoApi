@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     
     'rest_framework',
     'api',
-    'sslserver',
+    #'sslserver',
 ]
 
 MIDDLEWARE = [
