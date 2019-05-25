@@ -12,4 +12,11 @@ urlpatterns = [
     url('api/yiju/',views.YijuEveryday.as_view()),
     url('api/pushlike/',views.Pushlike.as_view()),
     url('api/findword/',views.Findword.as_view()),
+    url('api/initdict/',views.InitDict.as_view()),
 ]
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/2.2/howto/static-files/
+
+STATIC_URL = '/static/'

@@ -273,3 +273,23 @@ class Findword(APIView):
             data.append(word_dict)
         
         return Response(data)
+
+class InitDict(APIView):
+    def get(self,request):
+        try:
+            password=request.GET['password']
+        except:
+            return Response('error')
+
+        if password!='Ruanjian2019':
+            return Response('error')
+        
+        file=open('api\dictionary.txt',encoding="utf-8")
+        lines=file.readlines()
+        
+        for line in lines:
+            line=line.split(' ')
+            add=Dictionary(word=line[0],pronunciation=line[1],meaning=line[2],sentence=line[3],source=line[4])
+            add.save()
+        
+        return Response('init success')

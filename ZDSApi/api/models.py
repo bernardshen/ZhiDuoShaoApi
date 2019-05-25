@@ -29,10 +29,10 @@ class Word(models.Model):
 
 class Dictionary(models.Model):
     word = models.CharField(max_length=20)
+    pronunciation = models.TextField()#发音
     meaning = models.TextField()
     sentence = models.TextField()
     source = models.TextField()
-    part_of_speech = models.TextField() #词性
     def __str__(self):
         return self.word
 
