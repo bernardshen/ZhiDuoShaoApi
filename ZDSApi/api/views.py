@@ -287,6 +287,7 @@ class InitDict(APIView):
 
         Dictionary.objects.all().delete()
 
+        file=open(r'/home/ubuntu/zdsapi/ZDSApi/api/static/api/dictionary.txt',encoding='utf-8')
         file=open(r'api\dictionary.txt',encoding="utf-8")
         lines=file.readlines()
         return Response(1)
