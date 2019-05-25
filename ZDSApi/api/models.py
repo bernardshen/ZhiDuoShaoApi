@@ -3,6 +3,11 @@ import datetime
 from django.utils import timezone
 from django.contrib.auth.models import User
 
+class TempSave(models.Model):
+    userID = models.IntegerField()
+    saved = models.TextField()
+    date = models.DateTimeField()
+
 class Users(models.Model):
     user_name = models.CharField(max_length=50)
     bitmap = models.CharField(max_length=1005, default=1000*'0')
