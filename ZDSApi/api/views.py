@@ -284,7 +284,9 @@ class InitDict(APIView):
 
         if password!='Ruanjian2019':
             return Response('error')
-        
+
+        Dictionary.objects.all().delete()
+
         file=open(r'api\dictionary.txt',encoding="utf-8")
         lines=file.readlines()
         return Response(1)
