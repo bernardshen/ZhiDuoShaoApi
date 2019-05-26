@@ -60,7 +60,6 @@ def ch_date(date_year,date_month,date_day):
         month = chinese2digits(date_month, 2)
     if date_month < 10:
         month = chinese2digits(date_month, 0)
-    date_day = datetime.datetime.now().day
     if date_day < 10:
         day = chinese2digits(date_day, 0)
     if 10 < date_day < 20:
