@@ -288,9 +288,8 @@ class InitDict(APIView):
         Dictionary.objects.all().delete()
 
         file=open(r'/home/ubuntu/zdsapi/ZDSApi/api/static/api/dictionary.txt',encoding='utf-8')
-        file=open(r'api\dictionary.txt',encoding="utf-8")
+        #file=open(r'api\dictionary.txt',encoding="utf-8")
         lines=file.readlines()
-        return Response(1)
         for line in lines:
             line=line.split(' ')
             add=Dictionary(word=line[0],pronunciation=line[1],meaning=line[2],sentence=line[3],source=line[4])
