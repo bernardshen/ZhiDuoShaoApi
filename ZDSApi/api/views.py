@@ -545,7 +545,7 @@ class ReturnProcess(APIView):
             return Response(GenError(ERROR_CODE['userid_invalid']))
 
         total_num = Word.objects.all().count()
-        hist = [int(n.split(':')[0]) for n in user.study_history]
+        hist = [int(n.split(':')[1]) for n in user.study_history]
         
         s = 0
         for n in hist:
