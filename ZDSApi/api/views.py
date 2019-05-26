@@ -21,6 +21,7 @@ import requests
 from .models import *
 from datetime import datetime
 import json
+from django.db.models import Sum, Count
 
 
 ERROR_CODE = {  'userid_invalid':1,
@@ -380,7 +381,7 @@ class Pushlike_dict(APIView):
                 user.save()
 
         return Response('success')
-
+        
 class Findword(APIView):
     def get(self, request):
         
@@ -486,3 +487,34 @@ class ReturnCollect(APIView):
         }
 
         Response(resdata)
+
+class ReturnProcess(APIView):
+    def post(self, request):
+        try:
+            user_id = int(request.data.get('user_id'))
+        except:
+            return Response(ERROR_CODE['message_invalid'])
+        
+        try:
+            user = User.objects.get(id=user_id)
+        except:
+            return Response(ERROR_CODE['userid_invalid'])
+
+        total_num = Word.objects.all().count()
+        hist = [int(n.split(':')[0]) for n in user.study_history]
+        
+        s = 0
+        for n in hist:
+            s += n
+        progress = s/total_num
+
+        book = Book.objects.get(id=user.book_id)
+
+        resdata = {
+            'name': book.name,
+            'progress': progress,
+            'numbers': hist,
+        }
+
+        return Response(resdata)
+
