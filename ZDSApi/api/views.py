@@ -26,6 +26,7 @@ from django.db.models import Sum, Count
 
 ERROR_CODE = {  'userid_invalid':1,
                 'message_invalid':2,
+                'pushid_invalid':3,
                 }
 
 
@@ -239,6 +240,7 @@ class LoginView(APIView):
                 }
         return Response(respdata)
 
+
 class YijuEveryday(APIView):
     #处理每日一句的请求
     def get(self, request):
@@ -306,42 +308,47 @@ class Pushlike_yiju(APIView):
             push_id=int(request.GET['pushID'])
             like=int(request.GET['like'])
         except:
-            return Response('error')
+            return Response(ERROR_CODE('message_invalid'))
 
         #获取用户及推送信息
         try:
             user=Users.objects.get(id=user_id)
-            push=Yiju.objects.get(id=push_id)
         except:
-            return Response('error')
+            return Response(ERROR_CODE('userid_invalid'))
+        
+        try:
+            push = Yiju.objects.get(id=push_id)
+        except:
+            return Response(ERROR_CODE('pushid_invalid'))
 
         collect=user.yiju_collected
-        if len(collect)==0:
-            collect=[-1]
+        if len(collect) == 0:
+            collect = [-1]
         else:
-            collect=list(map(int,collect.split(',')))
+            collect = list(map(int,collect.split(',')))
         #return Response(collect)
 
-        if like==1:
+        if like == 1:
             if push_id not in collect:
                 collect.append(push_id)
-                collect=list(map(str,collect))
-                collect=','.join(collect)
-                user.yiju_collected=collect
+                collect = list(map(str,collect))
+                collect = ','.join(collect)
+                user.yiju_collected = collect
                 user.save()
-                push.like=push.like+1
+                push.like = push.like+1
                 push.save()
         else:
             if push_id in collect:
                 collect.remove(push_id)
-                collect=list(map(str,collect))
-                collect=','.join(collect)
-                user.yiju_collected=collect
+                collect = list(map(str,collect))
+                collect = ','.join(collect)
+                user.yiju_collected = collect
                 user.save()
-                push.like=push.like-1
+                push.like = push.like-1
                 push.save()
 
         return Response(push.like)
+
 
 class Pushlike_dict(APIView):
     def get(self, request):
@@ -350,13 +357,13 @@ class Pushlike_dict(APIView):
             dict_id=int(request.GET['dictID'])
             like=int(request.GET['like'])
         except:
-            return Response('error')
+            return Response(ERROR_CODE['message_invalid'])
 
         #获取用户及推送信息
         try:
             user=Users.objects.get(id=user_id)
         except:
-            return Response('error')
+            return Response(ERROR_CODE['userid_invalid'])
 
         collect=user.dictionary_collected
         if len(collect)==0:
@@ -381,6 +388,7 @@ class Pushlike_dict(APIView):
                 user.save()
 
         return Response('success')
+
         
 class Findword(APIView):
     def get(self, request):
@@ -388,7 +396,7 @@ class Findword(APIView):
         try:
             word_request=request.GET['word']
         except:
-            return Response('error')
+            return Response(ERROR_CODE['message_invalid'])
         
         word_list=Dictionary.objects.filter(word=word_request)
         if word_list is None:
