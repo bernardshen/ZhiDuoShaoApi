@@ -18,7 +18,7 @@ class Users(models.Model):
     setting_review_word = models.IntegerField(default=10)
     study_history = models.TextField(default="")
     mode = models.IntegerField(default=0) #0表示积累模式
-    book_name = models.IntegerField(defalut=0)
+    book_name = models.IntegerField(default=0)
     def __str__(self):
         return self.user_name
 
