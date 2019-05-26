@@ -14,4 +14,7 @@ urlpatterns = [
     url('api/pushlike/',views.Pushlike.as_view()),
     url('api/findword/',views.Findword.as_view()),
     url('api/initdict/',views.InitDict.as_view()),
+    url('api/getwords/', views.GetWordsView.as_view()),
+    url('api/save/', views.StopAndSave.as_view()),
+    url('api/finish', views.FinishTask.as_view()),
 ]+static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -19,6 +19,8 @@ from rest_framework.settings import api_settings
 import json
 import requests
 from .models import *
+from datetime import datetime
+import json
 
 
 ERROR_CODE = {  'userid_invalid':1,
@@ -26,12 +28,102 @@ ERROR_CODE = {  'userid_invalid':1,
                 }
 
 
-class GetWordsView(APIView):
+
+class FinishTask(APIView):
     '''
-    背单词接口
+    背完今日单词
     '''
     def post(self, request):
-        id = request.data.get('user_id')
+        id = int(request.GET['userID'])
+        user = Users.objects.get(id=id)
+        data = request.GET['data']
+        wordlist = json.loads(data)['data']['word_List']
+        oldcount = 0
+        newcount = 0
+        bitmap = list(user.bitmap)
+        for word in wordlist:
+            word_id = word['word_id']
+            orig = word['word_RemberedTimes']
+            change = word['word_RemberedTimesChange']
+
+            if orig == 0:
+                newcount += 1
+                if change == -1:
+                    times = 1
+                else:
+                    times = 2
+            else:
+                times = orig + change
+                oldcount += 1
+
+            bitmap[word_id] = str(times)
+
+        user.bitmap = bitmap
+        today = str(oldcount) + ':' + str(newcount) + ','
+        user.study_history += today
+        user.save()
+
+        return Response({'message':'恭喜完成背诵！'})
+
+class StopAndSave(APIView):
+    '''
+    中途退出
+    '''
+    def post(self, request):
+        id = int(request.GET['userID'])
+        data = request.GET['save']
+        try:
+            last = TempSave.objects.get(userID=id)
+        except:
+            last = None
+
+        if last is None:
+            last = TempSave.objects.create(userID=id, saved=data, date=timezone.now())
+            last.save()
+        else:
+            last.saved = data
+            last.date = timezone.now()
+            last.save()
+
+        return Response(data)
+
+upper = 5
+>>>>>>> b206068bd4ff238947a0590e90a45a05ad12d921
+class GetWordsView(APIView):
+    '''
+    背单词接口s
+    '''
+    def post(self, request):
+        id = int(request.GET['userID'])
+        flag = self.FirstTimeToday(id)
+
+        if flag == True:
+            JSON = self.getword(id)
+        else:
+            JSON = self.getsaved(id)
+
+        return Response(JSON)
+
+    def FirstTimeToday(self, id):
+
+        try:
+            obj = TempSave.objects.get(userID=id)
+        except:
+            obj = None
+
+        if obj is None:
+            return True
+        day = str(obj.date).split()[0]
+        today = str(datetime.now()).split()[0]
+        return day != today
+
+    def getsaved(self, id):
+        save = TempSave.objects.get(userID=id)
+        content = eval(save.saved)
+        return content
+
+    def getword(self, id):
+        user = Users.objects.get(id = id)
         user = User.objects.get(user_id = id)
         new_words_num = user.setting_new_word
         review_words_num = user.setting_review_word
@@ -44,9 +136,7 @@ class GetWordsView(APIView):
         word_list = self.getwords(user.bitmap, new_words_num, review_words_num, already)
         data['word_List'] = word_list
         JSON['data'] = data
-
-        return Response(JSON)
-
+        return JSON
 
     def count(self, history):
         count = 0
@@ -60,7 +150,7 @@ class GetWordsView(APIView):
         if old < already:
             old = already
         for i, wd in enumerate(words[0:already]):
-            if int(bitmap[i]) < 3:
+            if int(bitmap[i]) < upper:
                 word = {}
                 pos = wd.pos
                 sentence = wd.sentence[0:pos] + '(' + wd.sentence[pos] + ')' + wd.sentence[pos+1:]
@@ -68,9 +158,12 @@ class GetWordsView(APIView):
                 word["word_PartOfSpeech"] = wd.part_of_speech
                 word["word_Sense"] = wd.meaning
                 word["word_RemberedTimes"] = int(bitmap[i])
+                word["word_RemberedTimesChange"] = 0
+                word["word_Show"] = False
+                word["word_id"] = wd.id
                 similar = ""
                 for w in words:
-                    if w.word == wd.word:
+                    if w.word == wd.word and w.id != wd.id:
                         po = w.pos
                         similar = w.sentence[0:po] + '(' + w.sentence[po] + ')' + w.sentence[po+1:]
                         break
@@ -79,17 +172,20 @@ class GetWordsView(APIView):
                 old -= 1
             if old == 0:
                 break
-        for i, wd in enumerate(words[already:]):
+        for wd in words[already:]:
             word = {}
             pos = wd.pos
             sentence = wd.sentence[0:pos] + '(' + wd.sentence[pos] + ')' + wd.sentence[pos+1:]
             word["word_Sentence"] = sentence
             word["word_PartOfSpeech"] = wd.part_of_speech
             word["word_Sense"] = wd.meaning
-            word["word_RemberedTimes"] = int(bitmap[i])
+            word["word_RemberedTimes"] = 0
+            word["word_RemberedTimesChange"] = 0
+            word["word_Show"] = False
+            word["word_id"] = wd.id
             similar = ""
             for w in words:
-                if w.word == wd.word:
+                if w.word == wd.word and w.id != wd.id:
                     po = w.pos
                     similar = w.sentence[0:po] + '(' + w.sentence[po] + ')' + w.sentence[po+1:]
                     break
@@ -99,9 +195,6 @@ class GetWordsView(APIView):
             if new == 0:
                 break
         return wordlist
-
-
-
 
 
 
@@ -171,7 +264,10 @@ class YijuEveryday(APIView):
         #获取收藏——字符串形式
         collect=userinfo.yiju_collected
         #获取收藏——列表形式
-        collect=list(map(int,collect.split(',')))
+        if len(collect)==0:
+            collect=[-1]
+        else:
+            collect=list(map(int,collect.split(',')))
         #获取每日一句信息
         try:
             yijus=Yiju.objects.filter(date__lte=date_request).order_by('-date')[:num]
@@ -220,7 +316,10 @@ class Pushlike(APIView):
             return Response('error')
 
         collect=user.yiju_collected
-        collect=list(map(int,collect.split(',')))
+        if len(collect==0):
+            collect=[-1]
+        else:
+            collect=list(map(int,collect.split(',')))
         #return Response(collect)
 
         if like==1:
@@ -258,6 +357,9 @@ class Findword(APIView):
         
         data=[]
         for w in word_list:
+            if len(w.meaning<=1):
+                continue
+                
             word_dict={
                 "id":w.id,  #该词的一种意义的id，用于收藏
                 "sense":w.meaning, #该词的这种意义是什么
@@ -282,9 +384,8 @@ class InitDict(APIView):
         Dictionary.objects.all().delete()
 
         file=open(r'/home/ubuntu/zdsapi/ZDSApi/api/static/api/dictionary.txt',encoding='utf-8')
-        file=open(r'api\dictionary.txt',encoding="utf-8")
+        #file=open(r'api\dictionary.txt',encoding="utf-8")
         lines=file.readlines()
-        return Response(1)
         for line in lines:
             line=line.split(' ')
             add=Dictionary(word=line[0],pronunciation=line[1],meaning=line[2],sentence=line[3],source=line[4])
