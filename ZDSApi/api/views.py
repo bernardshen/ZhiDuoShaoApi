@@ -19,9 +19,15 @@ from rest_framework.settings import api_settings
 import json
 import requests
 from .models import *
-
 from datetime import datetime
 import json
+
+
+ERROR_CODE = {  'userid_invalid':1,
+                'message_invalid':2,
+                }
+
+
 
 class FinishTask(APIView):
     '''
@@ -218,19 +224,7 @@ class LoginView(APIView):
         try:
             user = Users.objects.get(user_name=openid)
         except Exception:
-            # 微信用户第一次登陆,新建用户
-            # username = request.data.get('nickname')
-            # sex = request.data.get('sex')
-            # avatar = request.data.get('avatar')
             user = Users.objects.create(user_name=openid)
-            # user.set_password(openid)
-
-        # 手动签发jwt
-        # jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-        # jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-
-        # payload = jwt_payload_handler(user)
-        # token = jwt_encode_handler(payload)
 
         resp_data = {
                 "userid":user.id,
@@ -436,3 +430,59 @@ class InitDict(APIView):
             add.save()
         
         return Response('init success')
+
+
+# 学习设置
+class SetLearning(APIView):
+    def post(self, request):
+        try:
+            user_id = request.data.get('user_id')
+            word_num = int(request.data.get('word_num'))
+            review_num = int(request.data.get('review_num'))
+            mode = int(request.data.get('mode'))
+        except:
+            Response(ERROR_CODE['message_invalid'])
+        
+        user = Users.objects.get(user_id)
+
+        user.mode = mode
+        user.setting_new_word = word_num
+        user.setting_review_word = review_num
+        user.save()
+
+        return Response("success")
+
+
+
+# 返回收藏
+class ReturnCollect(APIView):
+    def post(self, request):
+        try:
+            user_id = int(request.data.get('user_id'))
+        except:
+            return Response(ERROR_CODE['message_invalid'])
+
+        try:
+            user = Users.objects.get(id=user_id)
+        except:
+            return Response(ERROR_CODE['userid_invalid'])
+        
+        dict_c = user.dictionary_collected
+        yiju_c = user.yiju_collected
+        word_c = user.word_collected
+        
+        dict_c = [int(n) for n in dict_c.split(',')]
+        yiju_c = [int(n) for n in yiju_c.split(',')]
+        word_c = [int(n) for n in word_c.split(',')]
+
+        dict_l = [{'id': Dictionary.objects.get(w).id, 'name': Dictionary.objects.get(w).word} for w in dict_c]
+        yiju_l = [{'id': Yiju.objects.get(w).id, 'name': Yiju.objects.get(w).title} for w in yiju_c]
+        word_l = [{'id': Word.objects.get(w).id, 'name': Word.objects.get(w).word} for w in word_c]
+
+        resdata = {
+            'yiju': yiju_l,
+            'vocab': dict_c,
+            'learn': word_c,
+        }
+
+        Response(resdata)
