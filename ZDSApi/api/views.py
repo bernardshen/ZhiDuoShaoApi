@@ -177,7 +177,10 @@ class YijuEveryday(APIView):
         #获取收藏——字符串形式
         collect=userinfo.yiju_collected
         #获取收藏——列表形式
-        collect=list(map(int,collect.split(',')))
+        if len(collect==0):
+            collect=[-1]
+        else:
+            collect=list(map(int,collect.split(',')))
         #获取每日一句信息
         try:
             yijus=Yiju.objects.filter(date__lte=date_request).order_by('-date')[:num]
@@ -226,7 +229,10 @@ class Pushlike(APIView):
             return Response('error')
 
         collect=user.yiju_collected
-        collect=list(map(int,collect.split(',')))
+        if len(collect==0):
+            collect=[-1]
+        else:
+            collect=list(map(int,collect.split(',')))
         #return Response(collect)
 
         if like==1:
@@ -264,6 +270,9 @@ class Findword(APIView):
         
         data=[]
         for w in word_list:
+            if len(w.meaning<=1):
+                continue
+                
             word_dict={
                 "id":w.id,  #该词的一种意义的id，用于收藏
                 "sense":w.meaning, #该词的这种意义是什么
@@ -288,9 +297,8 @@ class InitDict(APIView):
         Dictionary.objects.all().delete()
 
         file=open(r'/home/ubuntu/zdsapi/ZDSApi/api/static/api/dictionary.txt',encoding='utf-8')
-        file=open(r'api\dictionary.txt',encoding="utf-8")
+        #file=open(r'api\dictionary.txt',encoding="utf-8")
         lines=file.readlines()
-        return Response(1)
         for line in lines:
             line=line.split(' ')
             add=Dictionary(word=line[0],pronunciation=line[1],meaning=line[2],sentence=line[3],source=line[4])
