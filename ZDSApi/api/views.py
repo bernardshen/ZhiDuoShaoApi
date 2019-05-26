@@ -304,7 +304,7 @@ class YijuEveryday(APIView):
 
         return Response(resp_data)
 
-class Pushlike(APIView):
+class Pushlike_yiju(APIView):
     def get(self, request):
         try:
             user_id=int(request.GET['userID'])
@@ -321,7 +321,7 @@ class Pushlike(APIView):
             return Response('error')
 
         collect=user.yiju_collected
-        if len(collect==0):
+        if len(collect)==0:
             collect=[-1]
         else:
             collect=list(map(int,collect.split(',')))
@@ -347,6 +347,45 @@ class Pushlike(APIView):
                 push.save()
 
         return Response(push.like)
+
+class Pushlike_dict(APIView):
+    def get(self, request):
+        try:
+            user_id=int(request.GET['userID'])
+            dict_id=int(request.GET['dictID'])
+            like=int(request.GET['like'])
+        except:
+            return Response('error')
+
+        #获取用户及推送信息
+        try:
+            user=Users.objects.get(id=user_id)
+        except:
+            return Response('error')
+
+        collect=user.dictionary_collected
+        if len(collect)==0:
+            collect=[-1]
+        else:
+            collect=list(map(int,collect.split(',')))
+        #return Response(collect)
+
+        if like==1:
+            if dict_id not in collect:
+                collect.append(dict_id)
+                collect=list(map(str,collect))
+                collect=','.join(collect)
+                user.dictionary_collected=collect
+                user.save()
+        else:
+            if dict_id in collect:
+                collect.remove(dict_id)
+                collect=list(map(str,collect))
+                collect=','.join(collect)
+                user.dictionary_collected=collect
+                user.save()
+
+        return Response('success')
 
 class Findword(APIView):
     def get(self, request):
