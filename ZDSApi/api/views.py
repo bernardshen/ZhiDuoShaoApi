@@ -395,7 +395,7 @@ class Findword(APIView):
         
         data=[]
         for w in word_list:
-            if len(w.meaning<=1):
+            if len(w.meaning)<=1:
                 continue
                 
             word_dict={
