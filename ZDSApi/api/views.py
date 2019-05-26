@@ -23,6 +23,55 @@ from datetime import datetime
 import json
 from django.db.models import Sum, Count
 
+date_map = {
+    0: '〇',
+    1: '一',
+    2: '二',
+    3: '三',
+    4: '四',
+    5: '五',
+    6: '六',
+    7: '七',
+    8: '八',
+    9: '九'
+}
+  
+def chinese2digits(num, type):
+    str_num = str(num)
+    result = ''
+    if type == 0:
+        for i in str_num:
+            result = '{}{}'.format(result, date_map.get(int(i)))
+    if type == 1:
+        result = '{}十{}'.format(date_map.get(int(str_num[0])), date_map.get(int(str_num[1])))
+    if type == 2:
+        result = '十{}'.format(date_map.get(int(str_num[1])))
+    if type == 3:
+        result = '十'
+    if type == 4:
+        result = '二十'
+    return result
+
+def ch_date(date_year,date_month,date_day):
+    year=chinese2digits(date_year,0)
+    if date_month == 10:
+        month = chinese2digits(date_month, 3)
+    if date_month > 10:
+        month = chinese2digits(date_month, 2)
+    if date_month < 10:
+        month = chinese2digits(date_month, 0)
+    if date_day < 10:
+        day = chinese2digits(date_day, 0)
+    if 10 < date_day < 20:
+        day = chinese2digits(date_day, 2)
+    if date_day > 20:
+        day = chinese2digits(date_day, 1)
+    if date_day == 10:
+        day = chinese2digits(date_day, 3)
+    if date_day == 20:
+        day = chinese2digits(date_day, 4)
+    return year,month,day
+
 
 ERROR_CODE = {
     'success':           0, 
@@ -316,14 +365,14 @@ class YijuEveryday(APIView):
         for yiju in yijus:
             data={
                 "push_id":      yiju.id,
-                "date":         yiju.date,
+                "date":         ch_date(date_year=yiju.date.year,date_month=yiju.date.month,date_day=yiju.date.day),
                 "dynasty":      yiju.dynasty,
                 "author":       yiju.author,
                 "title":        yiju.title,
                 "article":      yiju.article,
                 "content":      yiju.content,
                 "like_count":   yiju.like,
-                "like":         yiju.id in collect
+                "like":         int(yiju.id in collect)
             }
             yiju_list.append(data)
         
@@ -340,18 +389,18 @@ class Pushlike_yiju(APIView):
             push_id=int(request.GET['pushID'])
             like=int(request.GET['like'])
         except:
-            return Response(ERROR_CODE('message_invalid'), status=status.HTTP_400_BAD_REQUEST)
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
 
         #获取用户及推送信息
         try:
             user=Users.objects.get(id=user_id)
         except:
-            return Response(ERROR_CODE('userid_invalid'))
+            return Response(GenError(ERROR_CODE['userid_invalid']))
         
         try:
             push = Yiju.objects.get(id=push_id)
         except:
-            return Response(ERROR_CODE('pushid_invalid'))
+            return Response(GenError(ERROR_CODE['pushid_invalid']))
 
         collect=user.yiju_collected
         if len(collect) == 0:
@@ -389,13 +438,13 @@ class Pushlike_dict(APIView):
             dict_id = int(request.GET['dictID'])
             like = int(request.GET['like'])
         except:
-            return Response(ERROR_CODE['message_invalid'], status=status.HTTP_400_BAD_REQUEST)
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
 
         #获取用户及推送信息
         try:
             user = Users.objects.get(id=user_id)
         except:
-            return Response(ERROR_CODE['userid_invalid'])
+            return Response(GenError(ERROR_CODE['userid_invalid']))
 
         collect = user.dictionary_collected
         if len(collect) == 0:
@@ -428,11 +477,11 @@ class Findword(APIView):
         try:
             word_request = request.GET['word']
         except:
-            return Response(ERROR_CODE['message_invalid'], status=status.HTTP_400_BAD_REQUEST)
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
         
         word_list = Dictionary.objects.filter(word=word_request)
         if word_list is None:
-            return Response(ERROR_CODE['word_not_found'])
+            return Response(GenError(ERROR_CODE['word_not_found']))
         
         data=[]
         for w in word_list:
@@ -545,7 +594,7 @@ class ReturnProcess(APIView):
             return Response(GenError(ERROR_CODE['userid_invalid']))
 
         total_num = Word.objects.all().count()
-        hist = [int(n.split(':')[0]) for n in user.study_history]
+        hist = [int(n.split(':')[1]) for n in user.study_history]
         
         s = 0
         for n in hist:
