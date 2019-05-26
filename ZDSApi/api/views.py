@@ -49,7 +49,7 @@ class FinishTask(APIView):
     '''
     def post(self, request):
         try:
-            id = int(request.data.get('userID'))
+            id = int(request.GET['userID'])
             data = request.data.get('data')
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
@@ -95,7 +95,7 @@ class StopAndSave(APIView):
     '''
     def post(self, request):
         try:
-            id = int(request.data.get('userID'))
+            id = int(request.GET['userID'])
             data = request.data.get('save')
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
@@ -122,7 +122,7 @@ class GetWordsView(APIView):
     '''
     def post(self, request):
         try:
-            id = int(request.data.get('userID'))
+            id = int(request.GET['userID'])
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
 
@@ -156,13 +156,12 @@ class GetWordsView(APIView):
 
     def getword(self, id):
         user = Users.objects.get(id = id)
-        user = User.objects.get(user_id = id)
         new_words_num = user.setting_new_word
         review_words_num = user.setting_review_word
         JSON = {}
         JSON['method'] = "words_TodayTask"
         data = {}
-        history = user.study_history.split(',')
+        history = user.study_history.split(',')[0:-1]
         already = self.count(history)
         data['date'] = len(history) + 1
         word_list = self.getwords(user.bitmap, new_words_num, review_words_num, already)
