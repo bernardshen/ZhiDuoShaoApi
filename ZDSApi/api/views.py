@@ -447,4 +447,3 @@ class ReturnCollect(APIView):
         }
 
         Response(resdata)
->>>>>>> 5702a3ef599182e4177b94ac5d293f4160c91185
