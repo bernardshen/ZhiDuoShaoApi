@@ -98,7 +98,7 @@ class FinishTask(APIView):
     '''
     def post(self, request):
         try:
-            id = int(request.date.get['userID'])
+            id = int(request.data.get['userID'])
             data = request.data.get('data')
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
