@@ -269,7 +269,7 @@ class YijuEveryday(APIView):
         #获取收藏——字符串形式
         collect=userinfo.yiju_collected
         #获取收藏——列表形式
-        if len(collect==0):
+        if len(collect)==0:
             collect=[-1]
         else:
             collect=list(map(int,collect.split(',')))
