@@ -49,7 +49,7 @@ class FinishTask(APIView):
     '''
     def post(self, request):
         try:
-            id = int(request.GET['userID'])
+            id = int(request.date.get['userID'])
             data = request.data.get('data')
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
@@ -95,7 +95,7 @@ class StopAndSave(APIView):
     '''
     def post(self, request):
         try:
-            id = int(request.GET['userID'])
+            id = int(request.data.get['userID'])
             data = request.data.get('save')
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
@@ -121,8 +121,9 @@ class GetWordsView(APIView):
     背单词接口s
     '''
     def post(self, request):
+        print(str(request))
         try:
-            id = int(request.GET['userID'])
+            id = int(request.data.get('userID'))
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
 
