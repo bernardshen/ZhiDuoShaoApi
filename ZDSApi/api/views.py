@@ -339,18 +339,18 @@ class Pushlike_yiju(APIView):
             push_id=int(request.GET['pushID'])
             like=int(request.GET['like'])
         except:
-            return Response(ERROR_CODE('message_invalid'), status=status.HTTP_400_BAD_REQUEST)
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
 
         #获取用户及推送信息
         try:
             user=Users.objects.get(id=user_id)
         except:
-            return Response(ERROR_CODE('userid_invalid'))
+            return Response(GenError(ERROR_CODE['userid_invalid']))
         
         try:
             push = Yiju.objects.get(id=push_id)
         except:
-            return Response(ERROR_CODE('pushid_invalid'))
+            return Response(GenError(ERROR_CODE['pushid_invalid']))
 
         collect=user.yiju_collected
         if len(collect) == 0:
@@ -388,13 +388,13 @@ class Pushlike_dict(APIView):
             dict_id = int(request.GET['dictID'])
             like = int(request.GET['like'])
         except:
-            return Response(ERROR_CODE['message_invalid'], status=status.HTTP_400_BAD_REQUEST)
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
 
         #获取用户及推送信息
         try:
             user = Users.objects.get(id=user_id)
         except:
-            return Response(ERROR_CODE['userid_invalid'])
+            return Response(GenError(ERROR_CODE['userid_invalid']))
 
         collect = user.dictionary_collected
         if len(collect) == 0:
@@ -427,11 +427,11 @@ class Findword(APIView):
         try:
             word_request = request.GET['word']
         except:
-            return Response(ERROR_CODE['message_invalid'], status=status.HTTP_400_BAD_REQUEST)
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
         
         word_list = Dictionary.objects.filter(word=word_request)
         if word_list is None:
-            return Response(ERROR_CODE['word_not_found'])
+            return Response(GenError(ERROR_CODE['word_not_found']))
         
         data=[]
         for w in word_list:
