@@ -355,7 +355,7 @@ class Pushlike_yiju(APIView):
 
         collect=user.yiju_collected
         if len(collect) == 0:
-            collect = [-1]
+            collect = []
         else:
             collect = list(map(int,collect.split(',')))
         #return Response(collect)
@@ -399,7 +399,7 @@ class Pushlike_dict(APIView):
 
         collect = user.dictionary_collected
         if len(collect) == 0:
-            collect=[-1]
+            collect=[]
         else:
             collect = list(map(int,collect.split(',')))
         #return Response(collect)
