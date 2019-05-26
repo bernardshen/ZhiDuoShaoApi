@@ -21,12 +21,26 @@ import requests
 from .models import *
 from datetime import datetime
 import json
+from django.db.models import Sum, Count
 
 
-ERROR_CODE = {  'userid_invalid':1,
-                'message_invalid':2,
-                }
+ERROR_CODE = {
+    'success':           0, 
+    'userid_invalid':    1,
+    'message_invalid':   2,
+    'pushid_invalid':    3,
+    'word_not_found':    4,
+    'data_invalid':      5,
+    'server_no_response':6, 
+}
 
+
+def GenError(code, is_error=True):
+    msg = {
+        'error': is_error,
+        'code':  code,
+    }
+    return msg
 
 
 class FinishTask(APIView):
@@ -34,9 +48,19 @@ class FinishTask(APIView):
     背完今日单词
     '''
     def post(self, request):
-        id = int(request.GET['userID'])
-        user = Users.objects.get(id=id)
-        data = request.GET['data']
+        try:
+            id = int(request.data.get('userID'))
+            data = request.data.get('data')
+        except:
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
+        
+        # id = int(request.GET['userID'])
+        try:
+            user = Users.objects.get(id=id)
+        except:
+            return Response(GenError(ERROR_CODE['userid_invalid']))
+        
+        # data = request.GET['data']
         wordlist = json.loads(data)['data']['word_List']
         oldcount = 0
         newcount = 0
@@ -70,8 +94,12 @@ class StopAndSave(APIView):
     中途退出
     '''
     def post(self, request):
-        id = int(request.GET['userID'])
-        data = request.GET['save']
+        try:
+            id = int(request.data.get('userID'))
+            data = request.data.get('save')
+        except:
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             last = TempSave.objects.get(userID=id)
         except:
@@ -93,7 +121,12 @@ class GetWordsView(APIView):
     背单词接口s
     '''
     def post(self, request):
-        id = int(request.GET['userID'])
+        try:
+            id = int(request.data.get('userID'))
+        except:
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
+
+        # id = int(request.GET['userID'])
         flag = self.FirstTimeToday(id)
 
         if flag == True:
@@ -204,21 +237,21 @@ class LoginView(APIView):
     """
     微信登录逻辑
     """
-
     def post(self, request):
         # 前端发送code到后端,后端发送网络请求到微信服务器换取openid
-        code = request.data.get('code')
-        if not code:
-            return Response({'message': '缺少code'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            code = request.data.get('code')
+        except:
+            return Response(ERROR_CODE['message_invalid'], status=status.HTTP_400_BAD_REQUEST)
 
         url = "https://api.weixin.qq.com/sns/jscode2session?appid={0}&secret={1}&js_code={2}&grant_type=authorization_code" \
             .format(appid, appsecret, code)
         r = requests.get(url)
         res = json.loads(r.text)
         openid = res['openid'] if 'openid' in res else None
-        # session_key = res['session_key'] if 'session_key' in res else HTTP_414_REQUEST_URI_TOO_LONGNone
+
         if not openid:
-            return Response({'message': '微信调用失败'}, status=status.HTTP_503)
+            return Response(GenError(ERROR_CODE['server_no_response']), status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         # 判断用户是否第一次登录
         try:
@@ -238,6 +271,7 @@ class LoginView(APIView):
                 }
         return Response(respdata)
 
+
 class YijuEveryday(APIView):
     #处理每日一句的请求
     def get(self, request):
@@ -249,7 +283,8 @@ class YijuEveryday(APIView):
             date_request=date(date_Y,date_M,date_D)
             num=int(request.GET['num'])
         except:
-            return HttpResponse('error')
+            # return HttpResponse('error')
+            return Response(ERROR_CODE['invalid_message'], status=status.HTTP_400_BAD_REQUEST)
         
         #获取用户信息
         try:
@@ -305,93 +340,99 @@ class Pushlike_yiju(APIView):
             push_id=int(request.GET['pushID'])
             like=int(request.GET['like'])
         except:
-            return Response('error')
+            return Response(ERROR_CODE('message_invalid'), status=status.HTTP_400_BAD_REQUEST)
 
         #获取用户及推送信息
         try:
             user=Users.objects.get(id=user_id)
-            push=Yiju.objects.get(id=push_id)
         except:
-            return Response('error')
+            return Response(ERROR_CODE('userid_invalid'))
+        
+        try:
+            push = Yiju.objects.get(id=push_id)
+        except:
+            return Response(ERROR_CODE('pushid_invalid'))
 
         collect=user.yiju_collected
-        if len(collect)==0:
-            collect=[-1]
+        if len(collect) == 0:
+            collect = [-1]
         else:
-            collect=list(map(int,collect.split(',')))
+            collect = list(map(int,collect.split(',')))
         #return Response(collect)
 
-        if like==1:
+        if like == 1:
             if push_id not in collect:
                 collect.append(push_id)
-                collect=list(map(str,collect))
-                collect=','.join(collect)
-                user.yiju_collected=collect
+                collect = list(map(str,collect))
+                collect = ','.join(collect)
+                user.yiju_collected = collect
                 user.save()
-                push.like=push.like+1
+                push.like = push.like+1
                 push.save()
         else:
             if push_id in collect:
                 collect.remove(push_id)
-                collect=list(map(str,collect))
-                collect=','.join(collect)
-                user.yiju_collected=collect
+                collect = list(map(str,collect))
+                collect = ','.join(collect)
+                user.yiju_collected = collect
                 user.save()
-                push.like=push.like-1
+                push.like = push.like-1
                 push.save()
 
         return Response(push.like)
 
+
 class Pushlike_dict(APIView):
     def get(self, request):
         try:
-            user_id=int(request.GET['userID'])
-            dict_id=int(request.GET['dictID'])
-            like=int(request.GET['like'])
+            user_id = int(request.GET['userID'])
+            dict_id = int(request.GET['dictID'])
+            like = int(request.GET['like'])
         except:
-            return Response('error')
+            return Response(ERROR_CODE['message_invalid'], status=status.HTTP_400_BAD_REQUEST)
 
         #获取用户及推送信息
         try:
-            user=Users.objects.get(id=user_id)
+            user = Users.objects.get(id=user_id)
         except:
-            return Response('error')
+            return Response(ERROR_CODE['userid_invalid'])
 
-        collect=user.dictionary_collected
-        if len(collect)==0:
+        collect = user.dictionary_collected
+        if len(collect) == 0:
             collect=[-1]
         else:
-            collect=list(map(int,collect.split(',')))
+            collect = list(map(int,collect.split(',')))
         #return Response(collect)
 
-        if like==1:
+        if like == 1:
             if dict_id not in collect:
                 collect.append(dict_id)
-                collect=list(map(str,collect))
-                collect=','.join(collect)
-                user.dictionary_collected=collect
+                collect = list(map(str,collect))
+                collect = ','.join(collect)
+                user.dictionary_collected = collect
                 user.save()
         else:
             if dict_id in collect:
                 collect.remove(dict_id)
-                collect=list(map(str,collect))
-                collect=','.join(collect)
-                user.dictionary_collected=collect
+                collect = list(map(str,collect))
+                collect = ','.join(collect)
+                user.dictionary_collected = collect
                 user.save()
 
         return Response('success')
 
+        
 class Findword(APIView):
     def get(self, request):
         
         try:
-            word_request=request.GET['word']
+            word_request = request.GET['word']
         except:
-            return Response('error')
+            return Response(ERROR_CODE['message_invalid'], status=status.HTTP_400_BAD_REQUEST)
         
-        word_list=Dictionary.objects.filter(word=word_request)
+        word_list = Dictionary.objects.filter(word=word_request)
         if word_list is None:
-            return Response('None')
+            return Response(ERROR_CODE['word_not_found'])
         
         data=[]
         for w in word_list:
@@ -443,14 +484,17 @@ class SetLearning(APIView):
         except:
             Response(ERROR_CODE['message_invalid'])
         
-        user = Users.objects.get(user_id)
+        try:
+            user = Users.objects.get(id=user_id)
+        except:
+            return Response(ERROR_CODE('userid_invalid'), status=status.HTTP_400_BAD_REQUEST)
 
         user.mode = mode
         user.setting_new_word = word_num
         user.setting_review_word = review_num
         user.save()
 
-        return Response("success")
+        return Response(GenError(ERROR_CODE['success'], False))
 
 
 
@@ -460,7 +504,7 @@ class ReturnCollect(APIView):
         try:
             user_id = int(request.data.get('user_id'))
         except:
-            return Response(ERROR_CODE['message_invalid'])
+            return Response(ERROR_CODE['message_invalid'], status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = Users.objects.get(id=user_id)
@@ -486,3 +530,35 @@ class ReturnCollect(APIView):
         }
 
         Response(resdata)
+
+
+class ReturnProcess(APIView):
+    def post(self, request):
+        try:
+            user_id = int(request.data.get('user_id'))
+        except:
+            return Response(ERROR_CODE['message_invalid'], status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(id=user_id)
+        except:
+            return Response(ERROR_CODE['userid_invalid'])
+
+        total_num = Word.objects.all().count()
+        hist = [int(n.split(':')[0]) for n in user.study_history]
+        
+        s = 0
+        for n in hist:
+            s += n
+        progress = s/total_num
+
+        book = Book.objects.get(id=user.book_id)
+
+        resdata = {
+            'name': book.name,
+            'progress': progress,
+            'numbers': hist,
+        }
+
+        return Response(resdata)
+
