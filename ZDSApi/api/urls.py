@@ -19,6 +19,6 @@ urlpatterns = [
     url('api/save/', views.StopAndSave.as_view()),
     url('api/finish', views.FinishTask.as_view()),
     url('api/setlearn', views.SetLearning.as_view()),
-    url('api/returncollected', views.ReturnCollect.as_view()),
+    url('api/returncollected/', views.ReturnCollect.as_view()),
     url('api/schedule', views.ReturnProcess.as_view()),
 ]+static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

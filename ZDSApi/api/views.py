@@ -551,7 +551,7 @@ class SetLearning(APIView):
 class ReturnCollect(APIView):
     def get(self, request):
         try:
-            user_id = int(request.data.get('user_id'))
+            user_id = int(request.GET['user_id'])
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
 
@@ -616,7 +616,7 @@ class ReturnCollect(APIView):
 class ReturnProcess(APIView):
     def get(self, request):
         try:
-            user_id = int(request.data.get('user_id'))
+            user_id = int(request.GET['user_id'])
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
         
