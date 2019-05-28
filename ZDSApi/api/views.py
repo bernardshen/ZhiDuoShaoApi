@@ -524,16 +524,17 @@ class InitDict(APIView):
 
 # 学习设置
 class SetLearning(APIView):
-    def post(self, request):
+    def get(self, request):
         try:
-            user_id = int(request.data.get('user_id'))
-            word_num = int(request.data.get('word_num'))
-            review_num = int(request.data.get('review_num'))
-            mode = int(request.data.get('mode'))
+            user_id = int(request.GET['user_id'])
+            word_num = int(request.GET['word_num'])
+            review_num = int(request.GET['review_num'])
+            mode = int(request.GET['mode'])
         except:
+            print(10)
             Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
         
-        print(user_id)
+        
         try:
             user = Users.objects.get(id=user_id)
         except:
