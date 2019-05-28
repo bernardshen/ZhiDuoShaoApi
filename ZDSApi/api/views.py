@@ -533,6 +533,7 @@ class SetLearning(APIView):
         except:
             Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
         
+        print(user_id)
         try:
             user = Users.objects.get(id=user_id)
         except:
