@@ -649,3 +649,23 @@ class ReturnProcess(APIView):
 
         return Response(resdata)
 
+class GetSettings(APIView):
+    def get(self, request):
+        try:
+            user_id = int(request.GET['user_id'])
+        except:
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = Users.objects.get(id=user_id)
+        except:
+            return Response(GenError(ERROR_CODE['user_invalid']))
+
+        resdata = {
+            'mode': user.mode,
+            'word_num': user.setting_new_word,
+            'review_num': user.setting_review_word,
+        }
+
+        return Response(resdata)
+
