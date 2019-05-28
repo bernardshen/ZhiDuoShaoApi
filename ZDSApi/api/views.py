@@ -518,9 +518,41 @@ class ReturnCollect(APIView):
         yiju_c = [int(n) for n in yiju_c.split(',')]
         word_c = [int(n) for n in word_c.split(',')]
 
-        dict_l = [{'id': Dictionary.objects.get(w).id, 'name': Dictionary.objects.get(w).word} for w in dict_c]
-        yiju_l = [{'id': Yiju.objects.get(w).id, 'name': Yiju.objects.get(w).title} for w in yiju_c]
-        word_l = [{'id': Word.objects.get(w).id, 'name': Word.objects.get(w).word} for w in word_c]
+        dict_l = []
+        yiju_l = []
+        word_l = []
+
+        for w in dict_c:
+            word = Dictionary.objects.get(id=w)
+            tmp = {
+                'id': word.id,
+                'name': word.word,
+            }
+            dict_l.append(tmp)
+        
+        for w in yiju_c:
+            yiju = Yiju.objects.get(id=w)
+            tmp = {
+                'id': yiju.id,
+                'name': yiju.title,
+                'dynasty': yiju.dynasty,
+                'author': yiju.author,
+                'intro': yiju.content[:50],
+            }
+            yiju_l.append(tmp)
+
+        for w in yiju_c:
+            word = Word.objects.get(id=w)
+            tmp = {
+                'id': word.id,
+                'name': word.word,
+                'from': word.article,
+                'meaning': word.meaning,
+            }
+
+        # dict_l = [{'id': Dictionary.objects.get(w).id, 'name': Dictionary.objects.get(w).word} for w in dict_c]
+        # yiju_l = [{'id': Yiju.objects.get(w).id, 'name': Yiju.objects.get(w).title} for w in yiju_c]
+        # word_l = [{'id': Word.objects.get(w).id, 'name': Word.objects.get(w).word} for w in word_c]
 
         resdata = {
             'yiju': yiju_l,
