@@ -526,7 +526,7 @@ class InitDict(APIView):
 class SetLearning(APIView):
     def post(self, request):
         try:
-            user_id = request.data.get('user_id')
+            user_id = int(request.data.get('user_id'))
             word_num = int(request.data.get('word_num'))
             review_num = int(request.data.get('review_num'))
             mode = int(request.data.get('mode'))
