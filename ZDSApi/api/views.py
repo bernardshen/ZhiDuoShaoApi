@@ -524,24 +524,23 @@ class InitDict(APIView):
 
 # 学习设置
 class SetLearning(APIView):
-    def post(self, request):
+    def get(self, request):
         try:
-            user_id = int(request.data.get('user_id'))
-            print(user_id)
-            word_num = int(request.data.get('word_num'))
-            review_num = int(request.data.get('review_num'))
-            mode = int(request.data.get('mode'))
+            user_id = int(request.GET['user_id'])
+            word_num = int(request.GET['word_num'])
+            review_num = int(request.GET['review_num'])
+            # mode = int(request.GET['mode'])
         except:
             print(10)
             Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
         
-        print(user_id)
+        
         try:
             user = Users.objects.get(id=user_id)
         except:
             return Response(GenError(ERROR_CODE['userid_invalid']))
 
-        user.mode = mode
+        user.mode = 0
         user.setting_new_word = word_num
         user.setting_review_word = review_num
         user.save()
@@ -613,7 +612,7 @@ class ReturnCollect(APIView):
             'learn': word_c,
         }
 
-        Response(resdata)
+        return Response(resdata)
 
 
 class ReturnProcess(APIView):
@@ -623,13 +622,16 @@ class ReturnProcess(APIView):
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
         
+        print(user_id)
         try:
-            user = User.objects.get(id=user_id)
+            user = Users.objects.get(id=user_id)
         except:
             return Response(GenError(ERROR_CODE['userid_invalid']))
 
+        print(user_id)
+
         total_num = Word.objects.all().count()
-        hist = [int(n.split(':')[1]) for n in user.study_history]
+        hist = [int(n.split(':')[1]) for n in user.study_history.split(',')]
         
         s = 0
         for n in hist:
