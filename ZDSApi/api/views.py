@@ -549,7 +549,7 @@ class SetLearning(APIView):
 
 # 返回收藏
 class ReturnCollect(APIView):
-    def post(self, request):
+    def get(self, request):
         try:
             user_id = int(request.data.get('user_id'))
         except:
@@ -614,7 +614,7 @@ class ReturnCollect(APIView):
 
 
 class ReturnProcess(APIView):
-    def post(self, request):
+    def get(self, request):
         try:
             user_id = int(request.data.get('user_id'))
         except:
