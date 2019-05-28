@@ -527,10 +527,12 @@ class SetLearning(APIView):
     def post(self, request):
         try:
             user_id = int(request.data.get('user_id'))
+            print(user_id)
             word_num = int(request.data.get('word_num'))
             review_num = int(request.data.get('review_num'))
             mode = int(request.data.get('mode'))
         except:
+            print(10)
             Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
         
         print(user_id)
