@@ -601,6 +601,7 @@ class ReturnCollect(APIView):
                 'from': word.article,
                 'meaning': word.meaning,
             }
+            word_l.append(tmp)
 
         # dict_l = [{'id': Dictionary.objects.get(w).id, 'name': Dictionary.objects.get(w).word} for w in dict_c]
         # yiju_l = [{'id': Yiju.objects.get(w).id, 'name': Yiju.objects.get(w).title} for w in yiju_c]
@@ -608,8 +609,8 @@ class ReturnCollect(APIView):
 
         resdata = {
             'yiju': yiju_l,
-            'vocab': dict_c,
-            'learn': word_c,
+            'vocab': dict_l,
+            'learn': word_l,
         }
 
         return Response(resdata)
