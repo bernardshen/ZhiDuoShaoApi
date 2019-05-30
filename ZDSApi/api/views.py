@@ -98,7 +98,7 @@ class FinishTask(APIView):
     '''
     def post(self, request):
         try:
-            id = int(request.GET['userID'])
+            id = int(request.data.get('userID'))
             data = request.data.get('data')
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
@@ -144,7 +144,7 @@ class StopAndSave(APIView):
     '''
     def post(self, request):
         try:
-            id = int(request.GET['userID'])
+            id = int(request.data.get('userID'))
             data = request.data.get('save')
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
@@ -170,8 +170,9 @@ class GetWordsView(APIView):
     背单词接口s
     '''
     def post(self, request):
+        print(str(request))
         try:
-            id = int(request.GET['userID'])
+            id = int(request.data.get('userID'))
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
 
@@ -558,21 +559,23 @@ class InitDict(APIView):
 
 # 学习设置
 class SetLearning(APIView):
-    def post(self, request):
+    def get(self, request):
         try:
-            user_id = request.data.get('user_id')
-            word_num = int(request.data.get('word_num'))
-            review_num = int(request.data.get('review_num'))
-            mode = int(request.data.get('mode'))
+            user_id = int(request.GET['user_id'])
+            word_num = int(request.GET['word_num'])
+            review_num = int(request.GET['review_num'])
+            # mode = int(request.GET['mode'])
         except:
+            print(10)
             Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
+        
         
         try:
             user = Users.objects.get(id=user_id)
         except:
             return Response(GenError(ERROR_CODE['userid_invalid']))
 
-        user.mode = mode
+        user.mode = 0
         user.setting_new_word = word_num
         user.setting_review_word = review_num
         user.save()
@@ -583,9 +586,9 @@ class SetLearning(APIView):
 
 # 返回收藏
 class ReturnCollect(APIView):
-    def post(self, request):
+    def get(self, request):
         try:
-            user_id = int(request.data.get('user_id'))
+            user_id = int(request.GET['user_id'])
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
 
@@ -602,33 +605,69 @@ class ReturnCollect(APIView):
         yiju_c = [int(n) for n in yiju_c.split(',')]
         word_c = [int(n) for n in word_c.split(',')]
 
-        dict_l = [{'id': Dictionary.objects.get(w).id, 'name': Dictionary.objects.get(w).word} for w in dict_c]
-        yiju_l = [{'id': Yiju.objects.get(w).id, 'name': Yiju.objects.get(w).title} for w in yiju_c]
-        word_l = [{'id': Word.objects.get(w).id, 'name': Word.objects.get(w).word} for w in word_c]
+        dict_l = []
+        yiju_l = []
+        word_l = []
+
+        for w in dict_c:
+            word = Dictionary.objects.get(id=w)
+            tmp = {
+                'id': word.id,
+                'name': word.word,
+            }
+            dict_l.append(tmp)
+        
+        for w in yiju_c:
+            yiju = Yiju.objects.get(id=w)
+            tmp = {
+                'id': yiju.id,
+                'name': yiju.title,
+                'dynasty': yiju.dynasty,
+                'author': yiju.author,
+                'intro': yiju.content[:50],
+            }
+            yiju_l.append(tmp)
+
+        for w in yiju_c:
+            word = Word.objects.get(id=w)
+            tmp = {
+                'id': word.id,
+                'name': word.word,
+                'from': word.article,
+                'meaning': word.meaning,
+            }
+            word_l.append(tmp)
+
+        # dict_l = [{'id': Dictionary.objects.get(w).id, 'name': Dictionary.objects.get(w).word} for w in dict_c]
+        # yiju_l = [{'id': Yiju.objects.get(w).id, 'name': Yiju.objects.get(w).title} for w in yiju_c]
+        # word_l = [{'id': Word.objects.get(w).id, 'name': Word.objects.get(w).word} for w in word_c]
 
         resdata = {
             'yiju': yiju_l,
-            'vocab': dict_c,
-            'learn': word_c,
+            'vocab': dict_l,
+            'learn': word_l,
         }
 
-        Response(resdata)
+        return Response(resdata)
 
 
 class ReturnProcess(APIView):
-    def post(self, request):
+    def get(self, request):
         try:
-            user_id = int(request.data.get('user_id'))
+            user_id = int(request.GET['user_id'])
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
         
+        print(user_id)
         try:
-            user = User.objects.get(id=user_id)
+            user = Users.objects.get(id=user_id)
         except:
             return Response(GenError(ERROR_CODE['userid_invalid']))
 
+        print(user_id)
+
         total_num = Word.objects.all().count()
-        hist = [int(n.split(':')[1]) for n in user.study_history]
+        hist = [int(n.split(':')[1]) for n in user.study_history.split(',')]
         
         s = 0
         for n in hist:
@@ -641,6 +680,26 @@ class ReturnProcess(APIView):
             'name': book.name,
             'progress': progress,
             'numbers': hist,
+        }
+
+        return Response(resdata)
+
+class GetSettings(APIView):
+    def get(self, request):
+        try:
+            user_id = int(request.GET['user_id'])
+        except:
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = Users.objects.get(id=user_id)
+        except:
+            return Response(GenError(ERROR_CODE['user_invalid']))
+
+        resdata = {
+            'mode': user.mode,
+            'word_num': user.setting_new_word,
+            'review_num': user.setting_review_word,
         }
 
         return Response(resdata)
