@@ -394,6 +394,8 @@ class GetPush(APIView):
         #获取每日一句信息
         try:
             yiju=Yiju.objects.get(id=push_id)
+            if yiju is None:
+                return Response(ERROR_CODE['invalid_message'], status=status.HTTP_400_BAD_REQUEST)
         except:
             resp_data = {
                 "message": "yiju error",
