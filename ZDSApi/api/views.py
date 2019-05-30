@@ -381,6 +381,41 @@ class YijuEveryday(APIView):
 
         return Response(resp_data)
 
+class GetPush(APIView):
+    def get(self, request):
+        #收到/yiju/userID=xxx&date=xxxx-xx-xx$num=x
+        try:
+            push_id=int(request.GET['pushID'])
+        except:
+            # return HttpResponse('error')
+            return Response(ERROR_CODE['invalid_message'], status=status.HTTP_400_BAD_REQUEST)
+        
+        #获取每日一句信息
+        try:
+            yiju=Yiju.objects.get(id=push_id)
+        except:
+            resp_data = {
+                "message": "yiju error",
+                "date":date_request,
+            }
+            return Response(resp_data)
+
+        
+        resp_data={
+            "push_id":      yiju.id,
+            "date":         ch_date(date_year=yiju.date.year,date_month=yiju.date.month,date_day=yiju.date.day),
+            "dynasty":      yiju.dynasty,
+            "author":       yiju.author,
+            "title":        yiju.title,
+            "article":      yiju.article,
+            "content":      yiju.content,
+            "like_count":   yiju.like
+        }
+
+        return Response(resp_data)
+
+
+
 class Pushlike_yiju(APIView):
     def get(self, request):
         try:
