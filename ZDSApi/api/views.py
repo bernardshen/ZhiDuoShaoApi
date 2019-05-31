@@ -83,6 +83,16 @@ ERROR_CODE = {
     'server_no_response':6, 
 }
 
+class Jindu(APIView):
+    def post(self, request):
+        try:
+            id = int(request.data.get('userID'))
+            data = request.data.get('data')
+        except:
+            return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
+
+        JSON = {}
+
 
 def GenError(code, is_error=True):
     msg = {
@@ -242,6 +252,7 @@ class GetWordsView(APIView):
                 word["word_RemberedTimesChange"] = 0
                 word["word_Show"] = False
                 word["word_id"] = wd.id
+                word["word_word"]  = wd.word
                 similar = ""
                 for w in words:
                     if w.word == wd.word and w.id != wd.id:
@@ -264,6 +275,7 @@ class GetWordsView(APIView):
             word["word_RemberedTimesChange"] = 0
             word["word_Show"] = False
             word["word_id"] = wd.id
+            word["word_word"] = wd.word
             similar = ""
             for w in words:
                 if w.word == wd.word and w.id != wd.id:
