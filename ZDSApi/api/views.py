@@ -90,8 +90,30 @@ class Jindu(APIView):
             data = request.data.get('data')
         except:
             return Response(GenError(ERROR_CODE['message_invalid']), status=status.HTTP_400_BAD_REQUEST)
-
+        user = Users.objects.get(id = id)
         JSON = {}
+        JSON["method"] = "GET"
+        data = {}
+        data['word_book'] = 0
+        num1 = 0
+        num2 = 0
+        num3 = 0
+        bitmap = list(user.bitmap)
+        for i in range(0, 150):
+            if bitmap[i] == '0':
+                num3 += 1
+            elif bitmap[i] == '5':
+                num2 += 1
+            else:
+                num1 +=1
+        data["word_learning"] = num1
+        data["word_learned"] = num2
+        data["word_unlearn"] = num3
+        JSON['data'] = data
+
+        return Response(JSON)
+
+
 
 
 def GenError(code, is_error=True):
