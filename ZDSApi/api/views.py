@@ -142,7 +142,7 @@ class FinishTask(APIView):
             return Response(GenError(ERROR_CODE['userid_invalid']))
         
         # data = request.GET['data']
-        wordlist = json.loads(data)['data']['word_List']
+        wordlist = data['data']['word_List']
         oldcount = 0
         newcount = 0
         bitmap = list(user.bitmap)
@@ -277,7 +277,7 @@ class GetWordsView(APIView):
                 word["word_word"]  = wd.word
                 wordlist.append(word)
                 old -= 1
-            if old == 0:
+            if old <= 0:
                 break
         for wd in words[already:]:
             word = {}
@@ -293,7 +293,7 @@ class GetWordsView(APIView):
             word["word_word"] = wd.word
             wordlist.append(word)
             new -= 1
-            if new == 0:
+            if new <= 0:
                 break
         return wordlist
 
