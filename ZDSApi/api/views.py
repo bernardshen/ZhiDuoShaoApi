@@ -275,13 +275,6 @@ class GetWordsView(APIView):
                 word["word_Show"] = False
                 word["word_id"] = wd.id
                 word["word_word"]  = wd.word
-                similar = ""
-                for w in words:
-                    if w.word == wd.word and w.id != wd.id:
-                        po = w.pos
-                        similar = w.sentence[0:po] + '(' + w.sentence[po] + ')' + w.sentence[po+1:]
-                        break
-                word["word_SimilarSentence"] = similar
                 wordlist.append(word)
                 old -= 1
             if old == 0:
@@ -298,13 +291,6 @@ class GetWordsView(APIView):
             word["word_Show"] = False
             word["word_id"] = wd.id
             word["word_word"] = wd.word
-            similar = ""
-            for w in words:
-                if w.word == wd.word and w.id != wd.id:
-                    po = w.pos
-                    similar = w.sentence[0:po] + '(' + w.sentence[po] + ')' + w.sentence[po+1:]
-                    break
-            word["word_SimilarSentence"] = similar
             wordlist.append(word)
             new -= 1
             if new == 0:
